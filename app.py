@@ -108,7 +108,7 @@ with st.form("audio_text"):
 
 					if post_processing:
 
-						llm = ChatOpenAI(openai_api_key=openai_key, temperature=0, model_name=model)
+						llm = ChatOpenAI(openai_api_key=openai.api_key, temperature=0, model_name=model)
 
 						prompt = ChatPromptTemplate.from_template('''
 						{prompt}
