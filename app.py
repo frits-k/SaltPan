@@ -15,8 +15,8 @@ st.set_page_config(
 )
 
 def transcribe_chunk(chunk, chunk_number):
-	chunk_name = f"temp_chunk_{chunk_number}.wav"
-	chunk.export(chunk_name, format="wav")
+	chunk_name = f"temp_chunk_{chunk_number}.mp3"
+	chunk.export(chunk_name, format="mp3")
 
 	with open(chunk_name, "rb") as audio_file:
 		transcript = openai.audio.transcriptions.create(model="whisper-1", file=audio_file)
@@ -24,7 +24,7 @@ def transcribe_chunk(chunk, chunk_number):
 	os.remove(chunk_name)
 	return transcript.text
 
-def transcribe_long_audio(file_path, file_name, chunk_length_ms=120000):  # 2 minutes chunks
+def transcribe_long_audio(file_path, file_name, chunk_length_ms=1200000):  # 2 minutes chunks
 	audio = AudioSegment.from_mp3(file_path)
 	chunks = make_chunks(audio, chunk_length_ms)
 
