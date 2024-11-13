@@ -13,7 +13,7 @@ st.set_page_config(
 )
 
 # simple audio loader using OpenAI whisper API
-def CustomAudioLoader(file, file_name, api_key):
+def custom_audio_loader(file, file_name, api_key):
 
 	audio_file = open(file.name, "rb")
 			
@@ -42,7 +42,7 @@ not have been a required step, but in case we want to store the audios, split th
 elaborated flows, it's always nice to stick with the LangChain default document format.
 
 The tool can transcribe the voice memos as they are, or you can provide a custom prompt to adjust
-the tone, translate into another language, fix thegrammar or the form, or - like in my case - organize
+the tone, translate into another language, fix the grammar or the form, or - like in my case - organize
 the transcripts into book chapters. Sky is the limit!''')
 
 st.info("You need your own keys to run commercial LLM models.\
@@ -61,7 +61,7 @@ with st.form("audio_text"):
 		model = st.selectbox(
 			'Select a model',
 			('gpt-3.5-turbo','gpt-4'),
-			help="Make sure your account is elegible for GPT4 before using it"
+			help="Make sure your account is eligible for GPT4 before using it"
 		)
 
 		custom_prompt = st.text_area("Custom prompt")
@@ -90,7 +90,7 @@ with st.form("audio_text"):
 
 						temporary_file.write(voice_memo.read())
 
-					audio_doc = CustomAudioLoader(temporary_file, file_name, openai_key)
+					audio_doc = custom_audio_loader(temporary_file, file_name, openai_key)
 
 					if post_processing:
 
