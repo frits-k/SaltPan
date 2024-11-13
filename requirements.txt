@@ -4,3 +4,4 @@ openai
 streamlit
 pydub
 ffmpeg-python
+streamlit-flow-component==1.5.0
