@@ -1,40 +1,56 @@
+import graphviz as graphviz
 import streamlit as st
+import uuid
 
-st.set_page_config(page_title="State Modification from Python - Streamlit Flow", layout="wide")
 
-st.title("State Modification from Python Demo")
+@st.cache_data
+def load_graph():
+    # Create a graphlib graph object
+    graph = graphviz.Digraph()
+    graph.edge("run", "intr")
+    graph.edge("intr", "runbl")
+    graph.edge("runbl", "run")
+    graph.edge("run", "kernel")
+    graph.edge("kernel", "zombie")
+    graph.edge("kernel", "sleep")
+    graph.edge("kernel", "runmem")
+    graph.edge("sleep", "swap")
+    graph.edge("swap", "runswap")
+    graph.edge("runswap", "new")
+    graph.edge("runswap", "runmem")
+    graph.edge("new", "runmem")
+    graph.edge("sleep", "runmem")
+    return graph
 
-# Removed st.echo('below') to prevent code output
 
-import streamlit as st
-from streamlit_flow import streamlit_flow
-from streamlit_flow.elements import StreamlitFlowNode, StreamlitFlowEdge
-from streamlit_flow.state import StreamlitFlowState
-from streamlit_flow.layouts import TreeLayout
+# Load and display the graph
+graph = load_graph()
+st.graphviz_chart(graph)
 
-if 'curr_state' not in st.session_state:
-    nodes = [StreamlitFlowNode("1", (0, 0), {'content': 'Node 1'}, 'input', 'right'),
-             StreamlitFlowNode("2", (1, 0), {'content': 'Node 2'}, 'default', 'right', 'left'),
-             StreamlitFlowNode("3", (2, 0), {'content': 'Node 3'}, 'default', 'right', 'left'),
-             ]
 
-    edges = [StreamlitFlowEdge("1-2", "1", "2", animated=True),
-             StreamlitFlowEdge("1-3", "1", "3", animated=True),
-             ]
+# Function to generate SVG data
+def generate_svg_data(graph):
+    # Render the graph as an SVG in memory
+    svg_data = graph.pipe(format="svg").decode("utf-8")
+    return svg_data
 
-    st.session_state.curr_state = StreamlitFlowState(nodes, edges)
 
-st.session_state.curr_state = streamlit_flow('example_flow',
-                                             st.session_state.curr_state,
-                                             layout=TreeLayout(direction='right'),
-                                             fit_view=True,
-                                             height=500,
-                                             enable_node_menu=True,
-                                             enable_edge_menu=True,
-                                             enable_pane_menu=True,
-                                             get_edge_on_click=True,
-                                             get_node_on_click=True,
-                                             show_minimap=False,
-                                             hide_watermark=True,
-                                             allow_new_edges=True,
-                                             min_zoom=0.1)
+# Button to open the graph as SVG in a new tab
+if st.button("Open SVG in New Tab", key="open_svg_button"):
+    # Generate SVG data
+    svg_data = generate_svg_data(graph)
+
+    # Generate a unique identifier for each execution
+    unique_id = str(uuid.uuid4())
+
+    # JavaScript to open a new tab and write the SVG directly to the HTML
+    js_code = f"""
+    <script>
+        var svgData = `{svg_data}`;  // Insert SVG content as a string
+        var newTab = window.open("about:blank", "_blank");
+        newTab.document.write('<html><head><title>SVG Image</title></head><body>' + svgData + '</body></html>');
+        newTab.document.close();
+    </script>
+    """
+    # Display the JavaScript in Streamlit to execute it
+    st.components.v1.html(js_code + f"<!-- {unique_id} -->", height=0, width=0)
