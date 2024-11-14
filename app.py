@@ -77,8 +77,6 @@ with st.form("audio_text"):
 
 					st.session_state["response"] = response
 					st.write(response)
-					#with open("output_response.txt", "w") as file:
-					#	file.write(response)
 
 					# Clean up the temporary file after each processing loop
 					os.remove(temporary_file.name)
