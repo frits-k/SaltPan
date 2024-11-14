@@ -1,44 +1,43 @@
-import graphviz as graphviz
+import graphviz
 import streamlit as st
 import uuid
 
+# Define the Graphviz script as a Python string
+graph_script = """
+dot = graphviz.Digraph()
+dot.node("A", "Receive Invoice")
+dot.node("B", "Verify Invoice Legitimacy")
+dot.node("C", "Is Invoice Legitimate?", shape="diamond")
+dot.node("D", "Contact Vendor for Verification")
+dot.node("E", "Flag for Further Review & Involve Supervisor")
+dot.edge("A", "B")
+dot.edge("B", "C")
+dot.edge("C", "D", label="No")
+dot.edge("C", "E", label="Yes")
+"""
 
-@st.cache_data
-def load_graph():
-    # Create a graphlib graph object
-    graph = graphviz.Digraph()
-    graph.edge("run", "intr")
-    graph.edge("intr", "runbl")
-    graph.edge("runbl", "run")
-    graph.edge("run", "kernel")
-    graph.edge("kernel", "zombie")
-    graph.edge("kernel", "sleep")
-    graph.edge("kernel", "runmem")
-    graph.edge("sleep", "swap")
-    graph.edge("swap", "runswap")
-    graph.edge("runswap", "new")
-    graph.edge("runswap", "runmem")
-    graph.edge("new", "runmem")
-    graph.edge("sleep", "runmem")
-    return graph
+# Function to dynamically execute the graph script and return the graph object
+def load_graph_from_script(script):
+    # Execute the script to create the `dot` object
+    local_vars = {"graphviz": graphviz}  # Pass graphviz into the exec context
+    exec(script, {}, local_vars)
+    dot = local_vars["dot"]  # Retrieve the `dot` object from local variables
+    return dot
 
+# Load and display the graph using the script in the variable
+dot = load_graph_from_script(graph_script)
+st.graphviz_chart(dot)
 
-# Load and display the graph
-graph = load_graph()
-st.graphviz_chart(graph)
-
-
-# Function to generate SVG data
-def generate_svg_data(graph):
+# Function to generate SVG data from `dot`
+def generate_svg_data(dot):
     # Render the graph as an SVG in memory
-    svg_data = graph.pipe(format="svg").decode("utf-8")
+    svg_data = dot.pipe(format="svg").decode("utf-8")
     return svg_data
-
 
 # Button to open the graph as SVG in a new tab
 if st.button("Open SVG in New Tab", key="open_svg_button"):
-    # Generate SVG data
-    svg_data = generate_svg_data(graph)
+    # Generate SVG data from the graph
+    svg_data = generate_svg_data(dot)
 
     # Generate a unique identifier for each execution
     unique_id = str(uuid.uuid4())
