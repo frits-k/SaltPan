@@ -9,11 +9,6 @@ from langchain.docstore.document import Document
 from pydub import AudioSegment
 from pydub.utils import make_chunks
 
-st.set_page_config(
-    page_title="Convert Voice Memos to Text | Learn LangChain",
-    page_icon="🔊"
-)
-
 def transcribe_chunk(chunk, chunk_number):
 	chunk_name = f"temp_chunk_{chunk_number}.mp3"
 	chunk.export(chunk_name, format="mp3")
@@ -38,27 +33,6 @@ def transcribe_long_audio(file_path, file_name, chunk_length_ms=1200000):  # 2 m
 		page_content = full_transcript.strip(),
 		metadata = {'file_name': file_name}
 	)
-
-st.header('🔊 Convert Voice Memos to Text')
-
-st.subheader('Learn LangChain | Demo Project #5')
-
-st.success("This is a demo project related to the [Learn LangChain](https://learnlangchain.org/) mini-course.")
-
-st.write('''
-This demo project takes inspiration from real life. I was reading a nutrition book and taking some
-audio notes/voice memos to keep track of the most useful information. Once finished the book, I
-thought that it would be useful to put the information together in an organic document, and that's
-really the kind of task you can automate with LangChain and LLM.
-
-In this tool, we build a simplified version of a custom LangChain document loader, to transcribe the
-audio using the OpenAI Whisper model and return it in the standardized LangChain format. This would
-not have been a required step, but in case we want to store the audios, split them or create more
-elaborated flows, it's always nice to stick with the LangChain default document format.
-
-The tool can transcribe the voice memos as they are, or you can provide a custom prompt to adjust
-the tone, translate into another language, fix the grammar or the form, or - like in my case - organize
-the transcripts into book chapters. Sky is the limit!''')
 
 st.info("You need your own keys to run commercial LLM models.\
     The form will process your keys safely and never store them anywhere.", icon="🔒")
@@ -130,15 +104,6 @@ with st.form("audio_text"):
 
 					# clean-up the temporary file
 					os.remove(temporary_file.name)
-
-with st.expander("Exercise Tips"):
-	st.write('''
-	This demo is probably the most interesting one to expand and improve:
-	- Browse [the code on GitHub](https://github.com/francescocarlucci/wordpress-code-assistant/blob/main/app.py) and make sure you understand it.
-	- Fork the repository to customize the code.
-	- Try to rewrite the document loader as a Class, and give it the same structure as others LangCHain loaders (TextLoader, CSVLoader).
-	- Get creative and produce more post processing flows, maybe enriching the UI as well. 
-	''')
 
 st.divider()
 
