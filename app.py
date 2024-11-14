@@ -61,7 +61,11 @@ with st.form("audio_text"):
 
 					prompt = ChatPromptTemplate.from_template('''
 					{prompt}
+					
+					Here is the transcript:
 					{transcript}
+					
+					Please use the above transcript to generate the Graphviz code as specified.
 					''')
 
 					chain = LLMChain(llm=llm, prompt=prompt)
