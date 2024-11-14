@@ -41,28 +41,7 @@ openai.api_key = st.text_input("OpenAI Api Key", help="You need an account on Op
 
 voice_memos = st.file_uploader("Upload your voice memos", type=["m4a", "mp3"], accept_multiple_files=True)
 
-post_processing = st.checkbox('Post-process your text transcript with a custom prompt')
-
-with st.form("audio_text"):	
-
-	if post_processing:
-
-		model = st.selectbox(
-			'Select a model',
-			('gpt-3.5-turbo','gpt-4'),
-			help="Make sure your account is eligible for GPT4 before using it"
-		)
-
-		custom_prompt = st.text_area("Custom prompt")
-
-		st.write('''
-		To further process your transcript effectively, the prompt should start with:
-		"Given the following transcript...". Here are a few examples:
-		- Given the following transcript, please change the tone of the voice and make it very formal.
-		- Given the following transcript, please translate it to *
-		- Given the following transcript, please summarize it in * words making sure the core concepts are included
-		''')
-
+with st.form("audio_text"):
 	execute = st.form_submit_button("🖊️ Process Voice Memos")
 
 	if execute:
@@ -80,30 +59,30 @@ with st.form("audio_text"):
 
 					audio_doc = transcribe_long_audio(temporary_file.name, file_name)
 
-					if post_processing:
+					with open("prompt.txt", "r") as file:
+						custom_prompt = file.read()
+					llm = ChatOpenAI(openai_api_key=openai.api_key, temperature=0, model_name="gpt-3.5-turbo")
 
-						llm = ChatOpenAI(openai_api_key=openai.api_key, temperature=0, model_name=model)
+					prompt = ChatPromptTemplate.from_template('''
+					{prompt}
+					{transcript}
+					''')
 
-						prompt = ChatPromptTemplate.from_template('''
-						{prompt}
-						{transcript}
-						''')
+					chain = LLMChain(llm=llm, prompt=prompt)
 
-						chain = LLMChain(llm=llm, prompt=prompt)
-
-						response = chain.run({
-							'prompt': custom_prompt,
-							'transcript': audio_doc.page_content
-						})
+					response = chain.run({
+						'prompt': custom_prompt,
+						'transcript': audio_doc.page_content
+					})
 						
-						st.write(response)
+					st.write(response)
 
-					else:
+				else:
 
-						st.write(audio_doc.page_content)
+					st.write(audio_doc.page_content)
 
-					# clean-up the temporary file
-					os.remove(temporary_file.name)
+				# clean-up the temporary file
+				os.remove(temporary_file.name)
 
 st.divider()
 
