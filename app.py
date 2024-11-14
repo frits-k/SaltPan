@@ -45,13 +45,9 @@ with st.form("audio_text"):
 	execute = st.form_submit_button("🖊️ Process Voice Memos")
 
 	if execute:
-
 		with st.spinner('Converting your voice memos...'):
-
 			if voice_memos is not None:
-
 				for voice_memo in voice_memos:
-
 					file_name, file_extension = os.path.splitext(voice_memo.name)
 
 					with tempfile.NamedTemporaryFile(suffix=file_extension, delete=False) as temporary_file:
@@ -74,15 +70,13 @@ with st.form("audio_text"):
 						'prompt': custom_prompt,
 						'transcript': audio_doc.page_content
 					})
-						
+
 					st.write(response)
 
-				else:
-
-					st.write(audio_doc.page_content)
-
-				# clean-up the temporary file
-				os.remove(temporary_file.name)
+					# Clean up the temporary file after each processing loop
+					os.remove(temporary_file.name)
+			else:
+				st.write("No audio file uploaded.")
 
 st.divider()
 
