@@ -75,6 +75,7 @@ with st.form("audio_text"):
 						'transcript': audio_doc.page_content
 					})
 
+					st.session_state["response"] = response
 					st.write(response)
 					#with open("output_response.txt", "w") as file:
 					#	file.write(response)
@@ -90,7 +91,7 @@ import streamlit as st
 import uuid
 
 # Define the Graphviz script as a Python string
-graph_script = response
+graph_script = st.session_state["response"]
 
 # Function to dynamically execute the graph script and return the graph object
 def load_graph_from_script(script):
