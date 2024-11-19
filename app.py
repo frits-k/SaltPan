@@ -141,39 +141,39 @@ with st.form("audio_text"):
 st.divider()
 
 def load_graph_from_script(script, api_key):
-    try:
-        # Attempt to execute the Graphviz script
-        local_vars = {"graphviz": graphviz}  # Pass graphviz into the exec context
-        exec(script, {}, local_vars)
-        dot = local_vars["dot"]  # Retrieve the `dot` object
-        return dot
-    except Exception as e:
-        # Handle invalid Graphviz script
-        st.warning(f"Invalid Graphviz script detected: {e}. Attempting to correct it...")
+	try:
+		# Attempt to execute the Graphviz script
+		local_vars = {"graphviz": graphviz}  # Pass graphviz into the exec context
+		exec(script, {}, local_vars)
+		dot = local_vars["dot"]  # Retrieve the `dot` object
+		return dot
+	except Exception as e:
+		# Handle invalid Graphviz script
+		st.warning(f"Invalid Graphviz script detected: {e}. Attempting to correct it...")
 
-        # Correct the script using OpenAI
-        correction_prompt_template = """
-        The following Graphviz code contains errors. Please correct it and return the fixed code. Do not include explanations, only the corrected code:
+		# Correct the script using OpenAI
+		correction_prompt_template = """
+		The following Graphviz code contains errors. Please correct it and return the fixed code. Do not include explanations, only the corrected code:
 
-        {script}
-        """
-        correction_prompt = ChatPromptTemplate.from_template(correction_prompt_template)
-        llm = ChatOpenAI(openai_api_key=api_key, temperature=0, model_name="gpt-3.5-turbo")
-        chain = LLMChain(llm=llm, prompt=correction_prompt)
+		{script}
+		"""
+		correction_prompt = ChatPromptTemplate.from_template(correction_prompt_template)
+		llm = ChatOpenAI(openai_api_key=api_key, temperature=0, model_name="gpt-3.5-turbo")
+		chain = LLMChain(llm=llm, prompt=correction_prompt)
 
-        # Generate corrected script
-        corrected_script = chain.run({"script": script})
+		# Generate corrected script
+		corrected_script = chain.run({"script": script})
 
-        # Try to load the corrected script
-        try:
-            local_vars = {"graphviz": graphviz}
-            exec(corrected_script, {}, local_vars)
-            dot = local_vars["dot"]
-            st.success("Graphviz script corrected successfully!")
-            return dot
-        except Exception as corrected_error:
-            st.error(f"Failed to correct the Graphviz script: {corrected_error}")
-            return None
+		# Try to load the corrected script
+		try:
+			local_vars = {"graphviz": graphviz}
+			exec(corrected_script, {}, local_vars)
+			dot = local_vars["dot"]
+			st.success("Graphviz script corrected successfully!")
+			return dot
+		except Exception as corrected_error:
+			st.error(f"Failed to correct the Graphviz script: {corrected_error}")
+			return None
 
 # Function to generate SVG data from `dot`
 def generate_svg_data(dot):
