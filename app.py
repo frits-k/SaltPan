@@ -11,19 +11,19 @@ from pydub import AudioSegment
 from pydub.utils import make_chunks
 
 def transcribe_chunk(chunk, chunk_number):
-	chunk_name = f"temp_chunk_{chunk_number}.mp3"
-	chunk.export(chunk_name, format="mp3")
+    chunk_name = f"temp_chunk_{chunk_number}.mp3"
+    chunk.export(chunk_name, format="mp3")
 
-	with open(chunk_name, "rb") as audio_file:
-		transcript = openai.audio.transcriptions.create(model="whisper-1", file=audio_file)
+    with open(chunk_name, "rb") as audio_file:
+        transcript = openai.audio.transcriptions.create(model="whisper-1", file=audio_file)
 
-	os.remove(chunk_name)
-	return transcript.text
+    os.remove(chunk_name)
+    return transcript.text
 
 def check_and_convert_to_128kbps(file_path):
     """
     Checks if the MP3 file is 128 kbps. If not, converts it to 128 kbps.
-    Returns the path to the (possibly converted) MP3 file.
+    Returns the path to the (possibly converted) MP3 file and whether it was converted.
     """
     # Use ffmpeg to probe the bitrate of the MP3 file
     probe = ffmpeg.probe(file_path)
@@ -37,10 +37,10 @@ def check_and_convert_to_128kbps(file_path):
 
         # Convert the file to 128 kbps using ffmpeg
         ffmpeg.input(file_path).output(output_path, audio_bitrate="128k").run(overwrite_output=True)
-        return output_path  # Return the converted file path
+        return output_path, True  # Return the converted file path and a flag
     else:
         print(f"{file_path} is already 128 kbps.")
-        return file_path  # Return the original file path if no conversion is needed
+        return file_path, False  # Return the original file path and a flag
 
 def transcribe_long_audio(file_path, file_name, chunk_length_ms=1200000):  # 2 minutes chunks
     """
@@ -48,7 +48,7 @@ def transcribe_long_audio(file_path, file_name, chunk_length_ms=1200000):  # 2 m
     Ensures the MP3 is 128 kbps before processing.
     """
     # Ensure the MP3 file is 128 kbps
-    file_path = check_and_convert_to_128kbps(file_path)
+    file_path, was_converted = check_and_convert_to_128kbps(file_path)
 
     # Load the audio file and split into chunks
     audio = AudioSegment.from_mp3(file_path)
@@ -60,64 +60,61 @@ def transcribe_long_audio(file_path, file_name, chunk_length_ms=1200000):  # 2 m
         chunk_transcript = transcribe_chunk(chunk, i)
         full_transcript += chunk_transcript + " "
 
-    # Clean up the temporary file if it was converted
-    if file_path != file_name:  # If the file was converted, it's a temporary file
-        os.remove(file_path)
-
+    # Return the converted flag for cleanup
     return Document(
         page_content=full_transcript.strip(),
         metadata={'file_name': file_name}
-    )
+    ), was_converted, file_path  # Include file_path for cleanup
 
-st.info("You need your own keys to run commercial LLM models.\
-    The form will process your keys safely and never store them anywhere.", icon="🔒")
+st.info("You need your own keys to run commercial LLM models. The form will process your keys safely and never store them anywhere.", icon="🔒")
 
 openai.api_key = st.text_input("OpenAI Api Key", help="You need an account on OpenAI to generate a key: https://openai.com/blog/openai-api")
 
 voice_memo = st.file_uploader("Upload your voice recording", type=["mp3"])
 
 with st.form("audio_text"):
-	execute = st.form_submit_button("💠️Crystallize to a graph")
+    execute = st.form_submit_button("💠️Crystallize to a graph")
 
-	if execute:
-		with st.spinner('Converting your voice memos...'):
-			if voice_memo is not None:
-				file_name, file_extension = os.path.splitext(voice_memo.name)
+    if execute:
+        with st.spinner('Converting your voice memo...'):
+            if voice_memo is not None:
+                file_name, file_extension = os.path.splitext(voice_memo.name)
 
-				with tempfile.NamedTemporaryFile(suffix=file_extension, delete=False) as temporary_file:
-					temporary_file.write(voice_memo.read())
+                with tempfile.NamedTemporaryFile(suffix=file_extension, delete=False) as temporary_file:
+                    temporary_file.write(voice_memo.read())
 
-				audio_doc = transcribe_long_audio(temporary_file.name, file_name)
+                # Transcribe the audio and get conversion details
+                audio_doc, was_converted, temp_file_path = transcribe_long_audio(temporary_file.name, file_name)
 
-				with open("prompt.txt", "r") as file:
-					custom_prompt = file.read()
-				llm = ChatOpenAI(openai_api_key=openai.api_key, temperature=0, model_name="gpt-3.5-turbo")
+                with open("prompt.txt", "r") as file:
+                    custom_prompt = file.read()
+                llm = ChatOpenAI(openai_api_key=openai.api_key, temperature=0, model_name="gpt-3.5-turbo")
 
-				prompt = ChatPromptTemplate.from_template('''
-				{prompt}
-				
-				Here is the transcript:
-				{transcript}
-				
-				Please use the above transcript to generate the Graphviz code as specified.
-				''')
+                prompt = ChatPromptTemplate.from_template('''
+                {prompt}
 
-				chain = LLMChain(llm=llm, prompt=prompt)
+                Here is the transcript:
+                {transcript}
 
-				response = chain.run({
-					'prompt': custom_prompt,
-					'transcript': audio_doc.page_content
-				})
+                Please use the above transcript to generate the Graphviz code as specified.
+                ''')
 
-				st.session_state["response"] = response
-				st.write(response)
-				#with open("output_response.txt", "w") as file:
-				#	file.write(response)
+                chain = LLMChain(llm=llm, prompt=prompt)
 
-				# Clean up the temporary file after each processing loop
-				os.remove(temporary_file.name)
-			else:
-				st.write("No audio file uploaded.")
+                response = chain.run({
+                    'prompt': custom_prompt,
+                    'transcript': audio_doc.page_content
+                })
+
+                st.session_state["response"] = response
+                st.write(response)
+
+                # Clean up temporary files
+                os.remove(temporary_file.name)
+                if was_converted:
+                    os.remove(temp_file_path)  # Remove the converted file if it exists
+            else:
+                st.write("No audio file uploaded.")
 
 st.divider()
 
