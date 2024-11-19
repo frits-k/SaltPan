@@ -86,26 +86,48 @@ with st.form("audio_text"):
                 # Transcribe the audio and get conversion details
                 audio_doc, was_converted, temp_file_path = transcribe_long_audio(temporary_file.name, file_name)
 
-                with open("prompt.txt", "r") as file:
-                    custom_prompt = file.read()
-                llm = ChatOpenAI(openai_api_key=openai.api_key, temperature=0, model_name="gpt-3.5-turbo")
+                # Step 1: Sanitize the transcript
+                with open("prompt_sanitize.txt", "r") as file:
+                    sanitize_prompt = file.read()
+                llm_sanitize = ChatOpenAI(openai_api_key=openai.api_key, temperature=0, model_name="gpt-3.5-turbo")
 
-                prompt = ChatPromptTemplate.from_template('''
+                sanitize_template = ChatPromptTemplate.from_template('''
                 {prompt}
 
-                Here is the transcript:
+                Here is the transcript to sanitize:
                 {transcript}
+                ''')
+
+                sanitize_chain = LLMChain(llm=llm_sanitize, prompt=sanitize_template)
+
+                # Run the sanitization step
+                sanitized_transcript = sanitize_chain.run({
+                    'prompt': sanitize_prompt,
+                    'transcript': audio_doc.page_content
+                })
+
+                # Step 2: Generate Graphviz code from the sanitized transcript
+                with open("prompt_graph.txt", "r") as file:
+                    graph_prompt = file.read()
+                llm_graph = ChatOpenAI(openai_api_key=openai.api_key, temperature=0, model_name="gpt-3.5-turbo")
+
+                graph_template = ChatPromptTemplate.from_template('''
+                {prompt}
+
+                Here is the sanitized transcript:
+                {sanitized_transcript}
 
                 Please use the above transcript to generate the Graphviz code as specified.
                 ''')
 
-                chain = LLMChain(llm=llm, prompt=prompt)
+                graph_chain = LLMChain(llm=llm_graph, prompt=graph_template)
 
-                response = chain.run({
-                    'prompt': custom_prompt,
-                    'transcript': audio_doc.page_content
+                response = graph_chain.run({
+                    'prompt': graph_prompt,
+                    'sanitized_transcript': sanitized_transcript
                 })
 
+                # Save response to session state and display it
                 st.session_state["response"] = response
                 st.write(response)
 
