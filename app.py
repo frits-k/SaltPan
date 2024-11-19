@@ -3,9 +3,9 @@ import os
 import openai
 import tempfile
 import streamlit as st
-from langchain import LLMChain
-from langchain.chat_models import ChatOpenAI
-from langchain.prompts import ChatPromptTemplate
+from langchain.chains import LLMChain  # Updated import for LLMChain
+from langchain_community.chat_models import ChatOpenAI  # Updated import for ChatOpenAI
+from langchain.prompts.chat import ChatPromptTemplate  # Updated import for ChatPromptTemplate
 from langchain.docstore.document import Document
 from pydub import AudioSegment
 from pydub.utils import make_chunks
