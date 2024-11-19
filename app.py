@@ -74,49 +74,48 @@ st.info("You need your own keys to run commercial LLM models.\
 
 openai.api_key = st.text_input("OpenAI Api Key", help="You need an account on OpenAI to generate a key: https://openai.com/blog/openai-api")
 
-voice_memos = st.file_uploader("Upload your voice recording", type=["mp3"], accept_multiple_files=True)
+voice_memo = st.file_uploader("Upload your voice recording", type=["mp3"])
 
 with st.form("audio_text"):
 	execute = st.form_submit_button("💠️Crystallize to a graph")
 
 	if execute:
 		with st.spinner('Converting your voice memos...'):
-			if voice_memos is not None:
-				for voice_memo in voice_memos:
-					file_name, file_extension = os.path.splitext(voice_memo.name)
+			if voice_memo is not None:
+				file_name, file_extension = os.path.splitext(voice_memo.name)
 
-					with tempfile.NamedTemporaryFile(suffix=file_extension, delete=False) as temporary_file:
-						temporary_file.write(voice_memo.read())
+				with tempfile.NamedTemporaryFile(suffix=file_extension, delete=False) as temporary_file:
+					temporary_file.write(voice_memo.read())
 
-					audio_doc = transcribe_long_audio(temporary_file.name, file_name)
+				audio_doc = transcribe_long_audio(temporary_file.name, file_name)
 
-					with open("prompt.txt", "r") as file:
-						custom_prompt = file.read()
-					llm = ChatOpenAI(openai_api_key=openai.api_key, temperature=0, model_name="gpt-3.5-turbo")
+				with open("prompt.txt", "r") as file:
+					custom_prompt = file.read()
+				llm = ChatOpenAI(openai_api_key=openai.api_key, temperature=0, model_name="gpt-3.5-turbo")
 
-					prompt = ChatPromptTemplate.from_template('''
-					{prompt}
-					
-					Here is the transcript:
-					{transcript}
-					
-					Please use the above transcript to generate the Graphviz code as specified.
-					''')
+				prompt = ChatPromptTemplate.from_template('''
+				{prompt}
+				
+				Here is the transcript:
+				{transcript}
+				
+				Please use the above transcript to generate the Graphviz code as specified.
+				''')
 
-					chain = LLMChain(llm=llm, prompt=prompt)
+				chain = LLMChain(llm=llm, prompt=prompt)
 
-					response = chain.run({
-						'prompt': custom_prompt,
-						'transcript': audio_doc.page_content
-					})
+				response = chain.run({
+					'prompt': custom_prompt,
+					'transcript': audio_doc.page_content
+				})
 
-					st.session_state["response"] = response
-					st.write(response)
-					#with open("output_response.txt", "w") as file:
-					#	file.write(response)
+				st.session_state["response"] = response
+				st.write(response)
+				#with open("output_response.txt", "w") as file:
+				#	file.write(response)
 
-					# Clean up the temporary file after each processing loop
-					os.remove(temporary_file.name)
+				# Clean up the temporary file after each processing loop
+				os.remove(temporary_file.name)
 			else:
 				st.write("No audio file uploaded.")
 
