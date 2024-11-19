@@ -1,3 +1,4 @@
+import ffmpeg
 import os
 import openai
 import tempfile
@@ -19,27 +20,61 @@ def transcribe_chunk(chunk, chunk_number):
 	os.remove(chunk_name)
 	return transcript.text
 
+def check_and_convert_to_128kbps(file_path):
+    """
+    Checks if the MP3 file is 128 kbps. If not, converts it to 128 kbps.
+    Returns the path to the (possibly converted) MP3 file.
+    """
+    # Use ffmpeg to probe the bitrate of the MP3 file
+    probe = ffmpeg.probe(file_path)
+    bitrate = int(probe['format']['bit_rate'])  # Bitrate is in bits per second
+
+    if bitrate != 128000:  # 128 kbps is 128,000 bits per second
+        print(f"Converting {file_path} to 128 kbps...")
+        temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".mp3")  # Create a temporary file
+        temp_file.close()
+        output_path = temp_file.name
+
+        # Convert the file to 128 kbps using ffmpeg
+        ffmpeg.input(file_path).output(output_path, audio_bitrate="128k").run(overwrite_output=True)
+        return output_path  # Return the converted file path
+    else:
+        print(f"{file_path} is already 128 kbps.")
+        return file_path  # Return the original file path if no conversion is needed
+
 def transcribe_long_audio(file_path, file_name, chunk_length_ms=1200000):  # 2 minutes chunks
-	audio = AudioSegment.from_mp3(file_path)
-	chunks = make_chunks(audio, chunk_length_ms)
+    """
+    Splits the MP3 file into smaller chunks and transcribes each chunk.
+    Ensures the MP3 is 128 kbps before processing.
+    """
+    # Ensure the MP3 file is 128 kbps
+    file_path = check_and_convert_to_128kbps(file_path)
 
-	full_transcript = ""
-	for i, chunk in enumerate(chunks):
-		print(f"Transcribing chunk {i + 1} of {len(chunks)}...")
-		chunk_transcript = transcribe_chunk(chunk, i)
-		full_transcript += chunk_transcript + " "
+    # Load the audio file and split into chunks
+    audio = AudioSegment.from_mp3(file_path)
+    chunks = make_chunks(audio, chunk_length_ms)
 
-	return Document(
-		page_content = full_transcript.strip(),
-		metadata = {'file_name': file_name}
-	)
+    full_transcript = ""
+    for i, chunk in enumerate(chunks):
+        print(f"Transcribing chunk {i + 1} of {len(chunks)}...")
+        chunk_transcript = transcribe_chunk(chunk, i)
+        full_transcript += chunk_transcript + " "
+
+    # Clean up the temporary file if it was converted
+    if file_path != file_name:  # If the file was converted, it's a temporary file
+        os.remove(file_path)
+
+    return Document(
+        page_content=full_transcript.strip(),
+        metadata={'file_name': file_name}
+    )
 
 st.info("You need your own keys to run commercial LLM models.\
     The form will process your keys safely and never store them anywhere.", icon="🔒")
 
 openai.api_key = st.text_input("OpenAI Api Key", help="You need an account on OpenAI to generate a key: https://openai.com/blog/openai-api")
 
-voice_memos = st.file_uploader("Upload your voice recording", type=["mp3"])
+voice_memos = st.file_uploader("Upload your voice recording", type=["mp3"], accept_multiple_files=True)
 
 with st.form("audio_text"):
 	execute = st.form_submit_button("💠️Crystallize to a graph")
