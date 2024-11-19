@@ -114,8 +114,7 @@ with st.form("audio_text"):
 				graph_template = ChatPromptTemplate.from_template('''
 				{prompt}
 
-				Here is the sanitized transcript:
-				{sanitized_transcript}
+				<transcript>{sanitized_transcript}</transcript>
 
 				Please use the above transcript to generate the Graphviz code as specified.
 				''')
