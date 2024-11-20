@@ -10,6 +10,27 @@ from langchain.docstore.document import Document
 from pydub import AudioSegment
 from pydub.utils import make_chunks
 
+st.set_page_config(layout="wide")
+# Custom HTML/CSS for the banner
+custom_html = """
+<div class="banner">
+    <img src="https://saltassociation.co.uk/wp-content/uploads/salt-crystal.jpg" alt="Banner Image">
+</div>
+<style>
+    .banner {
+        width: 100%;
+        height: 200px;
+        overflow: hidden;
+    }
+    .banner img {
+        width: 100%;
+        object-fit: cover;
+    }
+</style>
+"""
+# Display the custom HTML
+st.components.v1.html(custom_html)
+
 def transcribe_chunk(chunk, chunk_number):
 	chunk_name = f"temp_chunk_{chunk_number}.mp3"
 	chunk.export(chunk_name, format="mp3")
@@ -90,10 +111,10 @@ def transcribe_long_audio(file_path, file_name, chunk_length_ms=1200000):  # 2 m
 openai.api_key = st.text_input("Enter OpenAI Api Key", help="You need an account on OpenAI to generate a key: https://openai.com/blog/openai-api")
 
 #voice_memo = st.file_uploader("Upload your voice recording", type=["mp3"])
-voice_memo = st.audio_input("Record your thoughts")
+voice_memo = st.audio_input("Pour in your thoughts")
 
 with st.form("audio_text"):
-	execute = st.form_submit_button("💠️Crystallize thoughts to graph")
+	execute = st.form_submit_button("💠️Crystallize thoughts")
 
 	if execute:
 		with st.spinner("Crystallizing"):
