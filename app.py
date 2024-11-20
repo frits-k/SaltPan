@@ -10,7 +10,13 @@ from langchain.docstore.document import Document
 from pydub import AudioSegment
 from pydub.utils import make_chunks
 
-st.set_page_config(layout="wide")
+st.set_page_config(
+    page_title="SaltPan",  # Title of the app shown in the browser tab
+    page_icon="🌊",           # Optional: Icon shown in the browser tab
+    layout="wide",        # Optional: Layout of the app ('centered' or 'wide')
+    initial_sidebar_state="auto"  # Optional: Sidebar state ('auto', 'expanded', 'collapsed')
+)
+
 # Custom HTML/CSS for the banner
 custom_html = """
 <div class="banner">
