@@ -120,7 +120,7 @@ openai.api_key = st.text_input("Enter OpenAI Api Key", help="You need an account
 voice_memo = st.audio_input("Pour in your thoughts")
 
 with st.form("audio_text"):
-	execute = st.form_submit_button("💠️Crystallize thoughts")
+	execute = st.form_submit_button("💠️Crystallize your thoughts")
 
 	if execute:
 		with st.spinner("Crystallizing"):
