@@ -87,13 +87,13 @@ def transcribe_long_audio(file_path, file_name, chunk_length_ms=1200000):  # 2 m
 
 #st.info("You need your own keys to run commercial LLM models. The form will process your keys safely and never store them anywhere.", icon="🔒")
 
-openai.api_key = st.text_input("OpenAI Api Key", help="You need an account on OpenAI to generate a key: https://openai.com/blog/openai-api")
+openai.api_key = st.text_input("Enter OpenAI Api Key", help="You need an account on OpenAI to generate a key: https://openai.com/blog/openai-api")
 
 #voice_memo = st.file_uploader("Upload your voice recording", type=["mp3"])
-voice_memo = st.audio_input("Record or upload your voice memo")
+voice_memo = st.audio_input("Record your thoughts")
 
 with st.form("audio_text"):
-	execute = st.form_submit_button("💠️Crystallize sound to graph")
+	execute = st.form_submit_button("💠️Crystallize thoughts to graph")
 
 	if execute:
 		with st.spinner("Crystallizing"):
