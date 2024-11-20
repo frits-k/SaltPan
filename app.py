@@ -22,25 +22,44 @@ def transcribe_chunk(chunk, chunk_number):
 
 def check_and_convert_to_128kbps(file_path):
 	"""
-	Checks if the MP3 file is 128 kbps. If not, converts it to 128 kbps.
+	Checks if the audio file is an MP3 with 128 kbps or a WAV file.
+	Converts to a 128 kbps MP3 if necessary.
 	Returns the path to the (possibly converted) MP3 file and whether it was converted.
 	"""
-	# Use ffmpeg to probe the bitrate of the MP3 file
-	probe = ffmpeg.probe(file_path)
-	bitrate = int(probe['format']['bit_rate'])  # Bitrate is in bits per second
+	file_extension = os.path.splitext(file_path)[1].lower()
 
-	if bitrate != 128000:  # 128 kbps is 128,000 bits per second
-		print(f"Converting {file_path} to 128 kbps...")
+	if file_extension == ".mp3":
+		# Handle MP3 file
+		probe = ffmpeg.probe(file_path)
+		bitrate = int(probe['format']['bit_rate'])  # Bitrate is in bits per second
+
+		if bitrate != 128000:  # 128 kbps is 128,000 bits per second
+			print(f"Converting {file_path} to 128 kbps...")
+			temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".mp3")  # Create a temporary file
+			temp_file.close()
+			output_path = temp_file.name
+
+			# Convert the file to 128 kbps using ffmpeg
+			ffmpeg.input(file_path).output(output_path, audio_bitrate="128k").run(overwrite_output=True)
+			return output_path, True  # Return the converted file path and a flag
+		else:
+			print(f"{file_path} is already 128 kbps.")
+			return file_path, False  # Return the original file path and a flag
+
+	elif file_extension == ".wav":
+		# Handle WAV file
+		print(f"Converting {file_path} from WAV to 128 kbps MP3...")
 		temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".mp3")  # Create a temporary file
 		temp_file.close()
 		output_path = temp_file.name
 
-		# Convert the file to 128 kbps using ffmpeg
+		# Convert the WAV file to 128 kbps MP3 using ffmpeg
 		ffmpeg.input(file_path).output(output_path, audio_bitrate="128k").run(overwrite_output=True)
 		return output_path, True  # Return the converted file path and a flag
+
 	else:
-		print(f"{file_path} is already 128 kbps.")
-		return file_path, False  # Return the original file path and a flag
+		raise ValueError(f"Unsupported file format: {file_extension}. Only MP3 and WAV files are supported.")
+
 
 def transcribe_long_audio(file_path, file_name, chunk_length_ms=1200000):  # 2 minutes chunks
 	"""
@@ -70,22 +89,30 @@ def transcribe_long_audio(file_path, file_name, chunk_length_ms=1200000):  # 2 m
 
 openai.api_key = st.text_input("OpenAI Api Key", help="You need an account on OpenAI to generate a key: https://openai.com/blog/openai-api")
 
-voice_memo = st.file_uploader("Upload your voice recording", type=["mp3"])
+#voice_memo = st.file_uploader("Upload your voice recording", type=["mp3"])
+voice_memo = st.audio_input("Record or upload your voice memo")
 
 with st.form("audio_text"):
 	execute = st.form_submit_button("💠️Crystallize sound to graph")
 
 	if execute:
-		with st.spinner('Crystallizing'):
+		with st.spinner("Crystallizing"):
 			if voice_memo is not None:
-				file_name, file_extension = os.path.splitext(voice_memo.name)
-
-				with tempfile.NamedTemporaryFile(suffix=file_extension, delete=False) as temporary_file:
+				# Define a temporary file for storing the WAV data
+				with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as temporary_file:
+					# Save the WAV data to a temporary file
 					temporary_file.write(voice_memo.read())
+					temp_file_path = temporary_file.name
+
+				# Convert the WAV to a 128 kbps MP3 if necessary
+				converted_file_path, was_converted = check_and_convert_to_128kbps(temp_file_path)
+
+				# Extract the file name without extension
+				file_name = os.path.splitext(os.path.basename(temp_file_path))[0]
+				print(file_name)
 
 				# Transcribe the audio and get conversion details
-				audio_doc, was_converted, temp_file_path = transcribe_long_audio(temporary_file.name, file_name)
-
+				audio_doc, was_converted, final_file_path = transcribe_long_audio(converted_file_path, file_name)
 				# Step 1: Sanitize the transcript
 				with open("prompt_sanitize.txt", "r") as file:
 					sanitize_prompt = file.read()
@@ -131,9 +158,9 @@ with st.form("audio_text"):
 				#st.write(response)
 
 				# Clean up temporary files
-				os.remove(temporary_file.name)
-				if was_converted:
-					os.remove(temp_file_path)  # Remove the converted file if it exists
+				#os.remove(temporary_file.name)
+				#if was_converted:
+				#	os.remove(temp_file_path)  # Remove the converted file if it exists
 			else:
 				st.write("No audio file uploaded.")
 
