@@ -66,17 +66,17 @@ def transcribe_long_audio(file_path, file_name, chunk_length_ms=1200000):  # 2 m
 		metadata={'file_name': file_name}
 	), was_converted, file_path  # Include file_path for cleanup
 
-st.info("You need your own keys to run commercial LLM models. The form will process your keys safely and never store them anywhere.", icon="🔒")
+#st.info("You need your own keys to run commercial LLM models. The form will process your keys safely and never store them anywhere.", icon="🔒")
 
 openai.api_key = st.text_input("OpenAI Api Key", help="You need an account on OpenAI to generate a key: https://openai.com/blog/openai-api")
 
 voice_memo = st.file_uploader("Upload your voice recording", type=["mp3"])
 
 with st.form("audio_text"):
-	execute = st.form_submit_button("💠️Crystallize to a graph")
+	execute = st.form_submit_button("💠️Crystallize sound to graph")
 
 	if execute:
-		with st.spinner('Converting your voice memo...'):
+		with st.spinner('Crystallizing'):
 			if voice_memo is not None:
 				file_name, file_extension = os.path.splitext(voice_memo.name)
 
@@ -128,7 +128,7 @@ with st.form("audio_text"):
 
 				# Save response to session state and display it
 				st.session_state["response"] = response
-				st.write(response)
+				#st.write(response)
 
 				# Clean up temporary files
 				os.remove(temporary_file.name)
@@ -137,7 +137,7 @@ with st.form("audio_text"):
 			else:
 				st.write("No audio file uploaded.")
 
-st.divider()
+#st.divider()
 
 def load_graph_from_script(script, api_key):
 	try:
@@ -211,6 +211,6 @@ if "response" in st.session_state:
 		# Display the JavaScript in Streamlit to execute it
 		st.components.v1.html(js_code + f"<!-- {unique_id} -->", height=0, width=0)
 
-st.divider()
-st.write('A project by [Francesco Carlucci](https://francescocarlucci.com) - \
-Need AI training / consulting? [Get in touch](mailto:info@francescocarlucci.com)')
+#st.divider()
+#st.write('A project by [Francesco Carlucci](https://francescocarlucci.com) - \
+#Need AI training / consulting? [Get in touch](mailto:info@francescocarlucci.com)')
