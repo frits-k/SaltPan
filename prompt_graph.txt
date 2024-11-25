@@ -6,10 +6,10 @@ The following transcript details a process. Your task is to extract key steps, d
 4. To make the graph more compact, use new lines in each node description. The newline should be "\\n", not "\n". Aim for 20 symbols per line.
 5. Output the graph in this exact format:
 dot = graphviz.Digraph()
-dot.node("A", "Verify Invoice Legitimacy")
-dot.node("B", "Is Invoice Legitimate?", shape="diamond")
-dot.node("C", "Contact Vendor for Verification")
-dot.node("D", "Flag for Further Review")
+dot.node("A", "Process step")
+dot.node("B", "Process question?", shape="diamond")
+dot.node("C", "Process step")
+dot.node("D", "Process step")
 dot.edge("A", "B")
 dot.edge("B", "C", label="No")
 dot.edge("B", "D", label="Yes")
