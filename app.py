@@ -195,7 +195,7 @@ with st.form("audio_text"):
             # st.write(response)
 
             else:
-                st.write("No audio file uploaded.")
+                st.write("Finish recording first.")
 
 
 # st.divider()
@@ -254,8 +254,9 @@ if "response" in st.session_state:
     dot = load_graph_from_script(graph_script, openai.api_key)
     st.graphviz_chart(dot)
 
-    # Button to open the graph as SVG in a new tab
-    if st.button("Open SVG in New Tab", key="open_svg_button"):
+    # DEACTIVATED Button to open the graph as SVG in a new tab
+#    if st.button("Open SVG in New Tab", key="open_svg_button"):
+    if False:
         # Generate SVG data from the graph
         svg_data = generate_svg_data(dot)
 
